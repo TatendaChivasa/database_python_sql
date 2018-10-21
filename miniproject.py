@@ -4,6 +4,7 @@ import hashlib
 
 connection = None
 cursor = None
+getuser = None 
 
 def encrypt(password):
     alg = hashlib.sha256()
@@ -26,22 +27,23 @@ def connect(path):
         print("not connected")
         
     return
+
 def login():
-    global connection, cursor
+    global connection, cursor,getuser
     email = input("Please enter a valid email:")
-    password = encrypt(input("Please enter a password"))
-    name = first_name +" "+ last_name
     
-    if password != password2:
-        print(" Password do not match")
-        signup()
-    else:
-        user_data = (email, phone, name,password)
-        cur.execute("SELECT * FROM membes WHERE email=? and pwd=? ;" (email, password))
+    password = encrypt(input("Please enter a password: "))
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM inbox WHERE email=? ;",(email,))
+    rows=cursor.fetchall()
+    print("Your Messages:")
+    print(rows)
+    cursor.execute(' PRAGMA foreign_keys=ON; ')
     connection.commit()
     return
+
 def signup():
-    global connection, cursor
+    global connection,getemail
     email = input("Enter a valid email: ")
     phone = input("Enter enter a phone number: ")
     first_name = input("Enter first name: ")
@@ -51,16 +53,17 @@ def signup():
     
     name = first_name +" "+ last_name
     
+      
     if password != password2:
         print(" Password do not match")
         signup()
-        
     else:
+        
         user_data = (email, phone, name,password)
         try:
             cursor.execute("INSERT INTO members VALUES(?,?,?,?)", (email, phone, name,password))
         except sqlite3.IntegrityError:
-            print("this email has already been used")
+            print("The email or phone number has already been used")
         
     connection.commit()
     return
@@ -96,7 +99,7 @@ def main():
     #define_tables()
     #insert_data()
     welcomepage()
-    #### your part ####
+    
     # register all students in all courses.
     
     connection.commit()
