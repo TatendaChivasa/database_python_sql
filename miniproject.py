@@ -54,9 +54,13 @@ def signup():
     if password != password2:
         print(" Password do not match")
         signup()
+        
     else:
         user_data = (email, phone, name,password)
-        cursor.execute("INSERT INTO members VALUES(?,?,?,?)", (email, phone, name,password))
+        try:
+            cursor.execute("INSERT INTO members VALUES(?,?,?,?)", (email, phone, name,password))
+        except sqlite3.IntegrityError:
+            print("this email has already been used")
         
     connection.commit()
     return
