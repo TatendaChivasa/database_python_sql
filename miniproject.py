@@ -104,6 +104,7 @@ def offerride (email,name):
         carNo = input("Enter car number :")
         #make sure car number belongs to the member 
         cursor.execute("select owner from cars where cno = ? ;",(carNo,))
+        #check if its none 
         result  = cursor.fetchone()
         for row in result :
             member = row 
@@ -200,15 +201,17 @@ def searchride ():
     print("searchrides")
     keyword = tuple(list(input("Please enter a keyword : ").split()))
     
-    
+    # limit to 3 keywords 
     for i in keyword:
         check = "%" + i + "%"
         
         isless = True
         #while(isless):
-        print(i)
+        #Stop it from printing duplicates
         count = 0
         cursor.execute("SELECT  DISTINCT r.rno , r.price , r.rdate , r.seats , r.lugDesc , r.src, r.dst, r.driver, r.cno FROM rides r , locations l , enroute e WHERE ( r.src = l.lcode OR  r.dst = l.lcode  OR  (e.lcode = l.lcode AND e.rno = r.rno )) AND (l.city Like ?  OR  l.prov Like ? OR  l.address like ?);",(check,check,check))
+        #do the limit stuff
+        
         rides = cursor.fetchall()
         for j in rides:
             count = count + 1 
@@ -225,10 +228,9 @@ def searchride ():
     
     return 
 
-def bookcancelbookings ():
-    print("book/cancelbookings")
+
     
-    return 
+   
 def postrides (email,name):
     global connection, cursor, getuser, getemail
     rdate = input("Please provide a date for the ride(yyyy-mm-dd): ") 
@@ -280,6 +282,7 @@ def sdrequests (email,name):
     
     if(action.lower().replace(" ", "") == "allrequests"):
         # dosomething 
+        #limit both to 5 
         print("your requests")
         cursor.execute("SELECT * FROM requests WHERE email=? ;",(email,))
         messages=cursor.fetchall() 
@@ -292,6 +295,7 @@ def sdrequests (email,name):
                 cursor.execute("DELETE FROM requests WHERE rid  = ? AND email= ?;",(i,email))
         sdrequests(email,name)
     elif(action.lower().replace(" ", "") == "cityrequests"):
+        #limit both to 5 options to view
         loc=input("Please enter your location code or city for the requests")
         location = "%"+loc+"%"
         cursor.execute("SELECT * FROM requests r ,locations l  WHERE  (r.pickup = l.lcode OR r.dropoff = l.lcode) AND (l.lcode like ? OR l.city like ? ) ;",(location,location))
