@@ -1,6 +1,8 @@
 import sqlite3
 import time
 import hashlib
+import sys
+
 
 connection = None
 cursor = None
@@ -14,7 +16,7 @@ def encrypt(password):
 def connect():
     global connection, cursor
     
-    connection = sqlite3.connect(sys.argv[1] +'.sql')
+    connection = sqlite3.connect(sys.argv[1] )
     if (connection):
         
         cursor = connection.cursor()
@@ -22,8 +24,6 @@ def connect():
         connection.commit()
     else:
         print("not connected")
-        
-    return
         
     return
 
@@ -347,7 +347,7 @@ def menu (email,name):
     elif action == 2:
         searchride()
     elif action == 3:
-        bookcancelbookings()
+        bookcancelbookings(email, name)
     elif action == 4:
         postrides(email,name)
     elif action == 5:
@@ -600,10 +600,12 @@ def login():
     emailvalid = cursor.fetchall()
     if (emailvalid==[]):
         sign = input("Sorry you do not seem to be a signed up user. Would you like to sign up ? Y/N")
-        if(sign.upper() == "Y"):
+        sign = sign.upper().replace(" ", "")
+        if(sign == "Y"):
             signup()
-        elif(signup.upper() == "N"):
+        elif(sign == "N"):
             what = input(" LOGIN to try again")
+            what = what.upper().replace(" ", "")
             if(what == "LOGIN" ):         
                 login()
             else:
