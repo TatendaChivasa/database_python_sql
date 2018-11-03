@@ -11,20 +11,19 @@ def encrypt(password):
     alg.update(password.encode("utf-8"))
     return alg.hexdigest()
 
-def connect(path):
+def connect():
     global connection, cursor
     
-    connection = sqlite3.connect(path)
+    connection = sqlite3.connect(sys.argv[1] +'.sql')
     if (connection):
         
         cursor = connection.cursor()
-        #cursor.execute("select * from inbox;")
-        #rows=cursor.fetchall()
-        #print (rows)
         cursor.execute(' PRAGMA foreign_keys=ON; ')
         connection.commit()
     else:
         print("not connected")
+        
+    return
         
     return
 
@@ -375,10 +374,11 @@ def bookcancelbookings (email, name):
     reply = input("Would you like to see the bookings?(yes/ no)")
     reply = reply.lower().replace(" ", "")
     if reply == "yes":
-        cursor.execute("SELECT DISTINCT * FROM rides r, bookings b WHERE r.rno = b.rno AND r.driver = ? ;",(email,))
-        #nums=cursor.fetchall()
-        #cursor.execute("SELECT * FROM bookings WHERE rno = ? ;",(nums,))
-        rides=cursor.fetchall()        
+        #list available seats
+        available = "SELECT DISTINCT r.rno,(r.seats - sum(b.seats)) FROM rides r, bookings b WHERE r.rno = b.rno AND r.driver = ? GROUP BY r.rno;"
+        cursor.execute(available,(email,))
+        rides=cursor.fetchall()   
+       
         #getting all the bookings 
         
         #printing all the bookings 
@@ -392,21 +392,43 @@ def bookcancelbookings (email, name):
                 logout()
             #let them decide what they wanna do
             #menu(email,name)  # ########
-        else: 
-            for j in rides: 
-                print(j) 
+        else:
+            if len(rides) > 5: 
+                i = 0
+                while i<=5:
+                    for j in rides: 
+                        print(rides[i]) 
+                    i +=1
+                opt = input("If you would like to view more rides type ok otherwise type done ")
+                opt = opt.lower().replace(" ", "")
+                if opt == "ok": 
+                    i = 6
+                    while i<(len(rides)):
+                        for j in rides: 
+                            print(rides[i]) 
+                        i +=1 
+                else:
+                    pass
+                    
+                        
+            else:
+                for j in rides: 
+                        print(j) 
+                
             rno = input("Enter the ride number(rno) of the booking that you would like to cancel/press enter if you do not want to cancel any rides: ")
             if rno == "":
                 print("You are not cancelling any rides")
                 ans = input("Would you like to book other rides (yes/no)")
+                ans = ans.lower().replace(" ", "")
                 if ans == "yes":  
-                    book()
+                    book(email,name)
                     
                 else:
                     ans == "no"
                     menu(email, name)                
-                #give them the potion of booking other members or exiting the bookings
-            else:    
+                #give them the option of booking other members or exiting the bookings
+            else: 
+                #allow multiple deletes at once
                 receiving = cursor.execute("SELECT email FROM bookings WHERE rno = ? ;",(rno,))
                 cursor.execute("DELETE FROM bookings WHERE rno = ?;",(rno,))# ######
                 print("The following booking has been successfully cancelled " + str(rno))
@@ -417,7 +439,7 @@ def bookcancelbookings (email, name):
                 #ask them if they want to do other things
                 else:
                     print("You have the following remaining bookings:")
-                    cursor.execute("SELECT * FROM rides WHERE email = ? ;",(email,))
+                    cursor.execute("SELECT DISRINCT * FROM rides WHERE email = ? ;",(email,))
                     #getting all the remaining bookings 
                     new_bookings=cursor.fetchall()                    
                     for i in new_bookings:
@@ -428,6 +450,13 @@ def bookcancelbookings (email, name):
                 msg = msg_t_st[0]
                 #send message to the customer whose booking has been cancelled
                 cursor.execute("INSERT INTO inbox VALUES(?,?,?,?,?,?)", (receiving, msg, email, content, rno, 'n'))
+                ans2 = input("would you like to book people any any rides? (yes/no) ")
+                ans2 = ans2.lower().replace(" ", "")
+                if ans2 == "yes":  
+                    book(email,name)
+                else:
+                    ans2 == "no"
+                    menu(email, name)                    
                 
     elif reply == "no":
         menu(email, name) 
@@ -436,18 +465,61 @@ def bookcancelbookings (email, name):
     connection.commit()
     #cursor.close()
     return    
-def book():
-    print("Enter the details of the member you would like to book on a ride")
-    email = input("Enter the email of the user you would like to book ")
-    rno = input("Enter the ride number on which you want to book the user: ")
+def book(email, name):
+    print("Enter the details of the member you would like to book on a ride ")
+    b_email = input("Enter the email of the user you would like to book ")
+    rno = input("Select the ride number on which you want to book the user: ")
     cost = input("Enter the cost of the ride")
-    seats = input("Enter the number of seats you are booking for the user:")
-    #pickup = input("Enter the 
+    seats = input("Enter the number of seats you are booking for the user: ")
+    pickup = input("Enter the pickup location or location code: ")
+    dropoff = input("Enter the dropoff location or location code: ")
     
+    cursor.execute("SELECT bno FROM bookings")
+    bnum = cursor.fetchall()
+    bno = max(bnum)
+    bno = bno[0] + 1    
+    
+    #booking message sent to the member
+    cursor.execute("INSERT INTO bookings VALUES(?,?,?,?,?,?)", (bno, email, rno, cost, seats, pickup, dropoff))
+    
+    #warning if ride is being overbooked!! but allow if user confirms
+    avail = "SELECT DISTINCT r.rno,(r.seats - sum(b.seats)) FROM rides r, bookings b WHERE r.rno = b.rno AND r.driver = ? GROUP BY r.rno;"
+    cursor.execute(avail,(email,))
+    availseats =cursor.fetchall()  
+    i = 0
+    while i < len(availseats):
+        avail = availseats[i][i]
+        i += 1
+        if avail <=0:
+            confirm = input("This ride is being overbooked would you like to continue(yes/no): ")
+            confirm = confirm.lower().replace(" ", "")
+            if confirm == "yes":
+                print("your booking was successful!!!")
+            else:
+                action == "no"
+                print("The booking is not confirmed")
+                menu(email,name)
+        else:
+            print("your booking was successful!!!")
+    
+    cursor.execute("SELECT datetime('now')")
+    msg_t_st1 = cursor.fetchone()
+    msg1 = msg_t_st1[0]
+    content1 = ("You have been booked on the following ride " + str(rno))
+    #send message to the customer whose booking has been made
+    cursor.execute("INSERT INTO inbox VALUES(?,?,?,?,?,?)", (b_email, msg1, email, content, rno, 'n'))
+    ans2 = input("would you like to book people any any rides? (yes/no) ")
+    if ans2 == "yes":  
+        book()
+        
+    else:
+        ans2 == "no"
+        menu(email, name)         
     
     connection.commit()
     #cursor.close()
     return     
+    
 def postrides (email,name):
     global connection, cursor, getuser, getemail
     rdate = input("Please provide a date for the ride(yyyy-mm-dd): ") 
@@ -492,11 +564,8 @@ def postrides (email,name):
 
            
     connection.commit()
-    #cursor.close()
-    #connection.close()
-    return     
 
-
+    return 
 
 def signup():
     global connection,getemail
@@ -586,15 +655,11 @@ def welcomepage():
 
 
 
-
 def main():
     global connection, cursor
     
-    path = "./Miniproject1/miniproject.db"
-    connect(path)
-    #drop_tables()
-    #define_tables()
-    #insert_data()
+    
+    connect()    
     welcomepage()
     
     # register all students in all courses.
