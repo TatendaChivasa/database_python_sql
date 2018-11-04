@@ -2,6 +2,8 @@ import sqlite3
 import time
 import hashlib
 import sys
+from getpass import getpass
+
 
 
 connection = None
@@ -222,151 +224,8 @@ def searchride ():
                     #count = 0
                     #isless = True
                 
-                        
-                    
-    
     return 
 
-
-    
-   
-def postrides (email,name):
-    global connection, cursor, getuser, getemail
-    rdate = input("Please provide a date for the ride(yyyy-mm-dd): ") 
-    p_lcode = input("Please provide a pick up location code: ") 
-    d_lcode = input("Please provide a drop off location code: ")
-    price = input("Please enter the amount you are willing to pay per seat: ")
-    
-    #check date input
-    try:
-        datetime.datetime.strptime(rdate, "%Y-%m-%d")
-    except ValueError:
-        print("Enter a valid date format!!")
-        postrides(email,name)
-    
-    #check that lcodes exist in table      
-    # The request rid is set by your system to a unique number and not already in the table   
-    cursor.execute("SELECT lcode FROM locations WHERE lcode=? ;",(p_lcode,))
-    pickup = cursor.fetchall()
-    cursor.execute("SELECT lcode FROM locations WHERE lcode=? ;",(d_lcode,))
-    dropoff = cursor.fetchall()        
-    if len(pickup) == 0:
-        print("invalid pick up location")
-    elif len(dropoff) == 0:
-            print("invalid drop off location")  
-    else:
-        cursor.execute("SELECT rid FROM requests")
-        rides = cursor.fetchall()
-        rid = max(rides)
-        rid = rid[0] + 1
-        info = (rid, email, rdate, p_lcode, d_lcode, price,)
-        cursor.execute("INSERT INTO requests (rid, email, rdate, pickup, dropoff, amount) VALUES(?,?,?,?,?,?)", (rid, email, rdate, p_lcode, d_lcode, price)) #not insertiingg       
-        print("Your ride has been requested!!!")
-        
-    dec = input("Would you like to request another ride (yes/no): ")
-    dec = dec.lower().replace(" ", "")
-    if dec == "yes":  
-        postrides(email, name)
-        
-    else:
-        dec == "no"
-        menu(email, name)
-
-           
-    connection.commit(email, name)
-    return
-def sdrequests (email,name):
-    global connection, cursor
-    action = input("Type all requests to view  all your requests  and city requests to view requests from a specific city or location and MENU to return to Menu: ")
-    
-    if(action.lower().replace(" ", "") == "allrequests"):
-        # dosomething 
-        #limit both to 5 
-        print("your requests")
-        cursor.execute("SELECT * FROM requests WHERE email=? ;",(email,))
-        messages=cursor.fetchall() 
-        for i in messages:
-            print(i)
-        delete = input("Would you like to delete any of your rides ?")
-        if(delete.lower().replace(" ","") == "yes"):
-            rid =  tuple(list(input("Please list the rid's of the requests which you would like to delete seperated by spaces and press enter when u are done")))
-            for i in rid:
-                cursor.execute("DELETE FROM requests WHERE rid  = ? AND email= ?;",(i,email))
-        sdrequests(email,name)
-    elif(action.lower().replace(" ", "") == "cityrequests"):
-        #limit both to 5 options to view
-        loc=input("Please enter your location code or city for the requests")
-        location = "%"+loc+"%"
-        cursor.execute("SELECT * FROM requests r ,locations l  WHERE  (r.pickup = l.lcode OR r.dropoff = l.lcode) AND (l.lcode like ? OR l.city like ? ) ;",(location,location))
-        messages=cursor.fetchall() 
-        for i in messages:
-            print(i)     
-        delete = input("Would you like to message any of the posters ?")
-        if(delete.lower().replace(" ","") == "yes"):
-            rid =  input("Enter the rid of the ride you would to talk about?")
-            content = input("What would you like to tell the poster;")
-            rno = input ("What is the rno?:")
-            cursor.execute("SELECT email,rdate FROM requests WHERE rid =?;",(rid,))
-            stuff = cursor.fetchone()
-            poster = stuff[0]
-            date = stuff[1]
-            
-            try:
-                cursor.execute("INSERT INTO inbox VALUES(?,?,?,?,?,?)", (email,date,poster,content,rno,'n'))
-            except sqlite3.IntegrityError:
-                print("An error occurred. Please try again later.Check that you are sending to a registered member")                  
-            
-        sdrequests(email,name)
-    elif(action.lower().replace(" ", "") == "MENU"):
-        menu()  
-    else:
-        sdrequests(email,name)
-   
-    return 
-def logout():
-    print("Bye... Hope you come back")
-    print("____________________________________________________________________________________________________________________________________________")
-    welcomepage()
-    return
-
-
-def menu (email,name):
-    welcomestring = "Hello " + name + " !!!" + "What would you like to do today ?"
-    print(welcomestring)
-    print("Press 1 to offer rides.")
-    print("Press 2 to search rides.")
-    print("Press 3 to book or cancel bookings.")
-    print("Press 4 to post rides.")
-    print("Press 5 to search/delete ride requests.")
-    print("Press 6 to read/send/ reply messages.")
-    print("Press 7 to logout.")
-    action =input()
-    action = int(action.lower().replace(" ", ""))
-    if action == 1: 
-        offerride(email,name)
-    elif action == 2:
-        searchride()
-    elif action == 3:
-        bookcancelbookings(email, name)
-    elif action == 4:
-        postrides(email,name)
-    elif action == 5:
-        sdrequests(email,name)
-    elif action == 6:
-        sendmessage(email,name)  
-    elif action == 7:
-        logout()    
-       
-    else:
-        print("Sorry I didnt get that... I would repeat the menu again." )
-        menu(email,name)
-        
-        
-        
-    connection.commit()
-    return
-    
-    
 def bookcancelbookings (email, name):
     global connection, cursor
     
@@ -463,8 +322,8 @@ def bookcancelbookings (email, name):
              
                
     connection.commit()
-    #cursor.close()
-    return    
+    return   
+
 def book(email, name):
     print("Enter the details of the member you would like to book on a ride ")
     b_email = input("Enter the email of the user you would like to book ")
@@ -517,7 +376,6 @@ def book(email, name):
         menu(email, name)         
     
     connection.commit()
-    #cursor.close()
     return     
     
 def postrides (email,name):
@@ -566,6 +424,100 @@ def postrides (email,name):
     connection.commit()
 
     return 
+    
+ 
+def sdrequests (email,name):
+    global connection, cursor
+    action = input("Type all requests to view  all your requests  and city requests to view requests from a specific city or location and MENU to return to Menu: ")
+    
+    if(action.lower().replace(" ", "") == "allrequests"):
+        # dosomething 
+        #limit both to 5 
+        print("your requests")
+        cursor.execute("SELECT * FROM requests WHERE email=? ;",(email,))
+        messages=cursor.fetchall() 
+        for i in messages:
+            print(i)
+        delete = input("Would you like to delete any of your rides ?")
+        if(delete.lower().replace(" ","") == "yes"):
+            rid =  tuple(list(input("Please list the rid's of the requests which you would like to delete seperated by spaces and press enter when u are done")))
+            for i in rid:
+                cursor.execute("DELETE FROM requests WHERE rid  = ? AND email= ?;",(i,email))
+        sdrequests(email,name)
+    elif(action.lower().replace(" ", "") == "cityrequests"):
+        #limit both to 5 options to view
+        loc=input("Please enter your location code or city for the requests")
+        location = "%"+loc+"%"
+        cursor.execute("SELECT * FROM requests r ,locations l  WHERE  (r.pickup = l.lcode OR r.dropoff = l.lcode) AND (l.lcode like ? OR l.city like ? ) ;",(location,location))
+        messages=cursor.fetchall() 
+        for i in messages:
+            print(i)     
+        delete = input("Would you like to message any of the posters ?")
+        if(delete.lower().replace(" ","") == "yes"):
+            rid =  input("Enter the rid of the ride you would to talk about?")
+            content = input("What would you like to tell the poster;")
+            rno = input ("What is the rno?:")
+            cursor.execute("SELECT email,rdate FROM requests WHERE rid =?;",(rid,))
+            stuff = cursor.fetchone()
+            poster = stuff[0]
+            date = stuff[1]
+            
+            try:
+                cursor.execute("INSERT INTO inbox VALUES(?,?,?,?,?,?)", (email,date,poster,content,rno,'n'))
+            except sqlite3.IntegrityError:
+                print("An error occurred. Please try again later.Check that you are sending to a registered member")                  
+            
+        sdrequests(email,name)
+    elif(action.lower().replace(" ", "") == "MENU"):
+        menu()  
+    else:
+        sdrequests(email,name)
+   
+    return 
+def logout():
+    print("Bye... Hope you come back")
+    print("____________________________________________________________________________________________________________________________________________")
+    welcomepage()
+    return
+
+
+def menu (email,name):
+    welcomestring = "Hello " + name + " !!!" + "What would you like to do today ?"
+    print(welcomestring)
+    print("Press 1 to offer rides.")
+    print("Press 2 to search rides.")
+    print("Press 3 to book or cancel bookings.")
+    print("Press 4 to post rides.")
+    print("Press 5 to search/delete ride requests.")
+    print("Press 6 to read/send/ reply messages.")
+    print("Press 7 to logout.")
+    action =input()
+    action = int(action.lower().replace(" ", ""))
+    if action == 1: 
+        offerride(email,name)
+    elif action == 2:
+        searchride()
+    elif action == 3:
+        bookcancelbookings(email, name)
+    elif action == 4:
+        postrides(email,name)
+    elif action == 5:
+        sdrequests(email,name)
+    elif action == 6:
+        sendmessage(email,name)  
+    elif action == 7:
+        logout()    
+       
+    else:
+        print("Sorry I didnt get that... I would repeat the menu again." )
+        menu(email,name)
+        
+        
+        
+    connection.commit()
+    return
+    
+    
 
 def signup():
     global connection,getemail
@@ -573,6 +525,7 @@ def signup():
     phone = input("Enter enter a phone number: ")
     first_name = input("Enter first name: ")
     last_name = input("Enter last name: ")
+    #should we encrypt as they enter
     password = encrypt(input("Enter a password: "))
     password2 = encrypt(input("Re-enter your password: "))
     
@@ -619,7 +572,7 @@ def login():
         
         
     else:  
-        password = encrypt(input("Please enter a password: "))
+        password = encrypt(getpass("Please enter a password: "))
         cursor = connection.cursor()
         cursor.execute("SELECT pwd FROM members WHERE email=? ;",(email,))
         rows=cursor.fetchall()
