@@ -199,14 +199,14 @@ def offerride(email, name):
 def searchride():
     global connection, cursor 
     
-    print("search rides")
+    print("searchride")
     
-    #ask the user to enter a maximum of three inputs
+    #ask the user to enter a maximum of three inputs 
     keywords = map(str, input("Enter keywords separated by commas (3 maximum) :").split(','))
     
     
     # limit to 3 keywords 
-    all_rides =[];
+    all_rides = set();
     for i in keywords:
         
         keyword = '%'+i+'%'
@@ -224,33 +224,13 @@ def searchride():
             
             for j in rides:
                 if j not in all_rides:
-                    all_rides.append(j)
-                    
+                    all_rides.add(j)
+        print5(all_rides,0,4)            
+        
     
-    #display 5 results at a time               
-    start = 0;
-    end = 5;
-    for idx, l in enumerate(all_rides):
-        if((idx >= start) and (idx < end)):
-            print(l)  
-    start = 5
-    end = len(all_rides)
-                    
-    if(len(all_rides) > 5):
-        see_more_result = input("Would you like to see more results ? (yes or no) :")
-        if see_more_result == "yes":
-            for idx, l in enumerate(all_rides):
-                if((idx > start) and (idx < end)):
-                    print(l)                     
-
-#    print(all_rides)
-    #print("rno      |price  |date       |seats|lugdesc  |src|dst|driver        |cno|")
-    #for i in all_rides:
-        #print(i)
-     #   print(str(i[0]) +"      " + "|" + str(i[1])+"     " + "|" + str(i[2]) +" "+ "|" + str(i[3])+"    " + "|" + str(i[4]) + "|" + str(i[5]) + "|" + #str(i[6]) + "|" + str(i[7]) +" "+ "|" + str(i[8]))
-           
-                   
     connection.commit()
+    return   
+
 
 def sendmessage(email,name):
     global connection, cursor
