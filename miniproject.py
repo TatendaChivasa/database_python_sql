@@ -420,13 +420,13 @@ def bookcancelbookings (email, name):
                         pass
                    
                 
-        rno = input("Enter the ride number(rno) of the booking that you would like to cancel/press enter if you do not want to cancel any rides: ")
+        rno = input("Enter the ride number(rno) of the booking that you would like to cancel/enter zero if you do not want to cancel any rides: ")
         try:
             val = int(rno)
         except ValueError:
             print("Input the ride number as an integer")
             bookcancelbookings(email,name)
-        if rno == "":
+        if rno == 0:
             print("You are not cancelling any rides")
             ans = input("Would you like to book other rides (yes/no)")
             ans = ans.lower().replace(" ", "")
@@ -441,18 +441,21 @@ def bookcancelbookings (email, name):
             
             #allow multiple deletes at once
             cursor.execute("SELECT email FROM bookings WHERE rno = ? ;",(rno,))
-            rec_email = cursor.fetchone()
-            rec = rec_email[0]
-            content = ("The following ride was cancelled " + str(rno))
-            cursor.execute("SELECT datetime('now')")
-            msg_t_st = cursor.fetchone()
-            msg = msg_t_st[0]
-            status = 'n'
-                #send message to the customer whose booking has been cancelled
-            cursor.execute("INSERT INTO inbox VALUES(?,?,?,?,?,?)", (rec, msg, email, content, rno, status))            
-            cursor.execute("DELETE FROM bookings WHERE rno = ?;",(rno,))# ######
-            print("The following booking has been successfully cancelled " + str(rno))
-                           
+            rec_email = cursor.fetchall()
+            if len(rec_email) == 0:
+                print("there are no bookings for that ride")
+            else:
+                rec = rec_email[0]
+                content = ("The following ride was cancelled " + str(rno))
+                cursor.execute("SELECT datetime('now')")
+                msg_t_st = cursor.fetchone()
+                msg = msg_t_st[0]
+                status = 'n'
+                    #send message to the customer whose booking has been cancelled
+                cursor.execute("INSERT INTO inbox VALUES(?,?,?,?,?,?)", (rec, msg, email, content, rno, status))            
+                cursor.execute("DELETE FROM bookings WHERE rno = ?;",(rno,))# ######
+                print("The following booking has been successfully cancelled " + str(rno))
+                               
             ans2 = input("would you like to book people any any rides? (yes/no) ")
             ans2 = ans2.lower().replace(" ", "")
             if ans2 == "yes":  
@@ -466,7 +469,7 @@ def bookcancelbookings (email, name):
              
                
     connection.commit()
-    return       
+    return    
 
 def book(email, name):
     print("Enter the details of the member you would like to book on a ride ")
