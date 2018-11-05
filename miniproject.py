@@ -283,52 +283,6 @@ def sendmessage(email,name):
     connection.commit()
     return
 
-def postrides (email,name):
-    global connection, cursor, getuser, getemail
-    rdate = input("Please provide a date for the ride(yyyy-mm-dd): ") 
-    p_lcode = input("Please provide a pick up location code: ") 
-    d_lcode = input("Please provide a drop off location code: ")
-    price = input("Please enter the amount you are willing to pay per seat: ")
-    
-    #check date input
-    try:
-        datetime.datetime.strptime(rdate, "%Y-%m-%d")
-    except ValueError:
-        print("Enter a valid date format!!")
-        postrides(email,name)
-    
-    #check that lcodes exist in table      
-    # The request rid is set by your system to a unique number and not already in the table   
-    cursor.execute("SELECT lcode FROM locations WHERE lcode=? ;",(p_lcode,))
-    pickup = cursor.fetchall()
-    cursor.execute("SELECT lcode FROM locations WHERE lcode=? ;",(d_lcode,))
-    dropoff = cursor.fetchall()        
-    if len(pickup) == 0:
-        print("invalid pick up location")
-    elif len(dropoff) == 0:
-            print("invalid drop off location")  
-    else:
-        cursor.execute("SELECT rid FROM requests")
-        rides = cursor.fetchall()
-        rid = max(rides)
-        rid = rid[0] + 1
-        info = (rid, email, rdate, p_lcode, d_lcode, price,)
-        cursor.execute("INSERT INTO requests (rid, email, rdate, pickup, dropoff, amount) VALUES(?,?,?,?,?,?)", (rid, email, rdate, p_lcode, d_lcode, price)) #not insertiingg       
-        print("Your ride has been requested!!!")
-        
-    dec = input("Would you like to request another ride (yes/no): ")
-    dec = dec.lower().replace(" ", "")
-    if dec == "yes":  
-        postrides(email, name)
-        
-    else:
-        dec == "no"
-        menu(email, name)
-
-           
-    connection.commit(email, name)
-    return
-
 
 def sdrequests (email,name):
     global connection, cursor
@@ -429,7 +383,7 @@ def bookcancelbookings (email, name):
     reply = reply.lower().replace(" ", "")
     if reply == "yes":
         #list available seats
-        available = "SELECT DISTINCT r.rno,(r.seats - sum(b.seats)) FROM rides r, bookings b WHERE r.rno = b.rno AND r.driver = ? GROUP BY r.rno;"
+        available = "SELECT r.driver, r.rno ,(r.seats - sum(b.seats)) FROM rides r, bookings b WHERE r.rno = b.rno AND r.driver = ? GROUP BY r.rno;"
         cursor.execute(available,(email,))
         rides=cursor.fetchall()   
        
@@ -445,72 +399,92 @@ def bookcancelbookings (email, name):
             else:
                 logout()
             #let them decide what they wanna do
-            #menu(email,name)  # ########
+    
         else:
-            if len(rides) > 5: 
-                i = 0
-                while i<=5:
-                    for j in rides: 
-                        print(rides[i]) 
-                    i +=1
+            i = 0;
+            end = 5;
+            for idx, l in enumerate(rides):
+                if((idx >= i) and (idx < end)):
+                    print(l)  
+            start = 5
+            end = len(rides)
+                
+            if(len(rides) > 5): 
                 opt = input("If you would like to view more rides type ok otherwise type done ")
                 opt = opt.lower().replace(" ", "")
-                if opt == "ok": 
-                    i = 6
-                    while i<(len(rides)):
-                        for j in rides: 
-                            print(rides[i]) 
-                        i +=1 
+                if opt == "ok":                
+                    for idx, l in enumerate(rides):
+                        if((idx > start) and (idx < end)):
+                            print(l) 
                 else:
-                    pass
-                    
-                        
-            else:
-                for j in rides: 
-                        print(j) 
+                    if opt == 'done':
+                        pass
+                   
                 
-            rno = input("Enter the ride number(rno) of the booking that you would like to cancel/press enter if you do not want to cancel any rides: ")
-            if rno == "":
-                print("You are not cancelling any rides")
-                ans = input("Would you like to book other rides (yes/no)")
-                ans = ans.lower().replace(" ", "")
-                if ans == "yes":  
-                    book(email,name)
+        rno = input("Enter the ride number(rno) of the booking that you would like to cancel/press enter if you do not want to cancel any rides: ")
+        if rno == "":
+            print("You are not cancelling any rides")
+            ans = input("Would you like to book other rides (yes/no)")
+            ans = ans.lower().replace(" ", "")
+            if ans == "yes":  
+                book(email,name)
                     
-                else:
-                    ans == "no"
-                    menu(email, name)                
+            else:
+                ans == "no"
+                menu(email, name)                
                 #give them the option of booking other members or exiting the bookings
-            else: 
-                #allow multiple deletes at once
-                receiving = cursor.execute("SELECT email FROM bookings WHERE rno = ? ;",(rno,))
-                cursor.execute("DELETE FROM bookings WHERE rno = ?;",(rno,))# ######
-                print("The following booking has been successfully cancelled " + str(rno))
-                cursor.execute("SELECT * FROM bookings WHERE rno = ? ;",(rno,))
-                rides2=cursor.fetchall()                
-                if len(rides2) == 0: 
-                    print("You have no bookings remaining")
+        else: 
+            #allow multiple deletes at once
+            receiving = cursor.execute("SELECT email FROM bookings WHERE rno = ? ;",(rno,))
+            cursor.execute("DELETE FROM bookings WHERE rno = ?;",(rno,))# ######
+            print("The following booking has been successfully cancelled " + str(rno))
+            #cursor.execute("SELECT * FROM bookings WHERE rno = ? ;",(rno,))
+            left = "SELECT r.driver, r.rno ,(r.seats - sum(b.seats)) FROM rides r, bookings b WHERE r.rno = b.rno AND r.driver = ? GROUP BY r.rno;"
+            cursor.execute(left,(email,))                
+            rides2 = cursor.fetchall()                
+            if len(rides2) == 0: 
+                print("You have no bookings remaining")
                 #ask them if they want to do other things
-                else:
-                    print("You have the following remaining bookings:")
-                    cursor.execute("SELECT DISRINCT * FROM rides WHERE email = ? ;",(email,))
-                    #getting all the remaining bookings 
-                    new_bookings=cursor.fetchall()                    
-                    for i in new_bookings:
-                        print(i)
-                content = ("The following ride was cancelled " + str(rno))
-                cursor.execute("SELECT datetime('now')")
-                msg_t_st = cursor.fetchone()
-                msg = msg_t_st[0]
+            else:
+                print("You have the following remaining bookings:")
+                cursor.execute("SELECT DISTINCT * FROM rides WHERE driver = ? ;",(email,))
+                #getting all the remaining bookings 
+                new_bookings=cursor.fetchall()
+                    
+                i = 0;
+                end = 5;
+                for idx, l in enumerate(new_bookings):
+                    if((idx >= i) and (idx < end)):
+                        print(l)  
+                start = 5
+                end = len(new_bookings)
+                        
+                if(len(new_bookings) > 5): 
+                    opt = input("If you would like to view more rides type ok otherwise type done ")
+                    opt = opt.lower().replace(" ", "")
+                    if opt == "ok":                
+                        for idx, l in enumerate(new_bookings):
+                            if((idx > start) and (idx < end)):
+                                print(l) 
+                    else:
+                        if opt == 'done':
+                            pass
+                           
+                             
+                    
+            content = ("The following ride was cancelled " + str(rno))
+            cursor.execute("SELECT datetime('now')")
+            msg_t_st = cursor.fetchone()
+            msg = msg_t_st[0]
                 #send message to the customer whose booking has been cancelled
-                cursor.execute("INSERT INTO inbox VALUES(?,?,?,?,?,?)", (receiving, msg, email, content, rno, 'n'))
-                ans2 = input("would you like to book people any any rides? (yes/no) ")
-                ans2 = ans2.lower().replace(" ", "")
-                if ans2 == "yes":  
-                    book(email,name)
-                else:
-                    ans2 == "no"
-                    menu(email, name)                    
+            cursor.execute("INSERT INTO inbox VALUES(?,?,?,?,?,?)", (receiving, msg, email, content, rno, 'n'))
+            ans2 = input("would you like to book people any any rides? (yes/no) ")
+            ans2 = ans2.lower().replace(" ", "")
+            if ans2 == "yes":  
+                book(email,name)
+            else:
+                ans2 == "no"
+                menu(email, name)                    
                 
     elif reply == "no":
         menu(email, name) 
@@ -535,10 +509,10 @@ def book(email, name):
     bno = bno[0] + 1    
     
     #booking message sent to the member
-    cursor.execute("INSERT INTO bookings VALUES(?,?,?,?,?,?)", (bno, email, rno, cost, seats, pickup, dropoff))
+    cursor.execute("INSERT INTO bookings VALUES(?,?,?,?,?,?,?)", (bno, email, rno, cost, seats, pickup, dropoff))
     
     #warning if ride is being overbooked!! but allow if user confirms
-    avail = "SELECT DISTINCT r.rno,(r.seats - sum(b.seats)) FROM rides r, bookings b WHERE r.rno = b.rno AND r.driver = ? GROUP BY r.rno;"
+    avail = "SELECT r.driver r.rno,(r.seats - sum(b.seats)) FROM rides r, bookings b WHERE r.rno = b.rno AND r.driver = ? GROUP BY r.rno;"
     cursor.execute(avail,(email,))
     availseats =cursor.fetchall()  
     i = 0
