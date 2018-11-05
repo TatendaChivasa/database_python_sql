@@ -301,6 +301,8 @@ def print5(myset,i,j):
 def sdrequests (email,name):
     global connection, cursor
     action = input("Type all requests to view  all your requests  and city requests to view requests from a specific city or location and MENU to return to Menu: ")
+    messageset = set()
+    allset = set()
     
     if(action.lower().replace(" ", "") == "allrequests"):
         # dosomething 
@@ -309,7 +311,8 @@ def sdrequests (email,name):
         cursor.execute("SELECT * FROM requests WHERE email=? ;",(email,))
         messages=cursor.fetchall() 
         for i in messages:
-            print(i)
+            messageset.add(i)
+        print5(messageset,0,4)
         delete = input("Would you like to delete any of your rides ?")
         if(delete.lower().replace(" ","") == "yes"):
             rid =  tuple(list(input("Please list the rid's of the requests which you would like to delete seperated by spaces and press enter when u are done")))
@@ -321,9 +324,10 @@ def sdrequests (email,name):
         loc=input("Please enter your location code or city for the requests")
         location = "%"+loc+"%"
         cursor.execute("SELECT * FROM requests r ,locations l  WHERE  (r.pickup = l.lcode OR r.dropoff = l.lcode) AND (l.lcode like ? OR l.city like ? ) ;",(location,location))
-        messages=cursor.fetchall() 
-        for i in messages:
-            print(i)     
+        allreq=cursor.fetchall() 
+        for i in allreq:
+            allset.add(i)
+        print5(allset,0,4)
         delete = input("Would you like to message any of the posters ?")
         if(delete.lower().replace(" ","") == "yes"):
             rid =  input("Enter the rid of the ride you would to talk about?")
@@ -341,11 +345,14 @@ def sdrequests (email,name):
             
         sdrequests(email,name)
     elif(action.upper().replace(" ", "") == "MENU"):
-        menu(email, name)  
+        menu(email,name)  
     else:
         sdrequests(email,name)
    
     return 
+
+
+
 def logout():
     print("Bye... Hope you come back")
     print("____________________________________________________________________________________________________________________________________________")
@@ -646,26 +653,34 @@ def postrides (email,name):
 def signup():
     global connection,getemail
     email = input("Enter a valid email: ")
-    phone = input("Enter enter a phone number: ")
-    first_name = input("Enter first name: ")
-    last_name = input("Enter last name: ")
-    password = encrypt(input("Enter a password: "))
-    password2 = encrypt(input("Re-enter your password: "))
-    
-    name = first_name +" "+ last_name
-    
-    if password != password2:
-        print(" Password do not match")
-        signup()
-    else:
-        user_data = (email, phone, name,password)
-        try:
-            cursor.execute("INSERT INTO members VALUES(?,?,?,?)", (email, phone, name,password))
-        except sqlite3.IntegrityError:
-            print("The email or phone number has already been used")
+    pattern =re.compile("[^@]+@[^@]+\.[^@]+")
+    if(pattern.match(email)):   
+        phone = input("Enter enter a phone number: ")
+        first_name = input("Enter first name: ")
+        last_name = input("Enter last name: ")
+        password = encrypt(input("Enter a password: "))
+        password2 = encrypt(input("Re-enter your password: "))
         
-    connection.commit()
+        name = first_name +" "+ last_name
+        
+          
+        if password != password2:
+            print(" Password do not match")
+            signup()
+        else:
+            
+            user_data = (email, phone, name,password)
+            try:
+                cursor.execute("INSERT INTO members VALUES(?,?,?,?)", (email, phone, name,password))
+            except sqlite3.IntegrityError:
+                print("The email or phone number has already been used")
+            
+        connection.commit()
+    else:
+        print("This is not a valid email")
+        signup()
     return
+
 
 def login():
     global connection, cursor,getuser
