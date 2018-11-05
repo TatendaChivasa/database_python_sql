@@ -423,14 +423,14 @@ def bookcancelbookings (email, name):
                 logout()
             #let them decide what they wanna do
     
-        else:
-            i = 0
+       else:
+            start = 0
             end = 5
             for idx, l in enumerate(rides):
-                if((idx >= i) and (idx < end)):
+                if((idx >= start) and (idx < end)):
                     print(l)  
             start = 5
-            end = len(rides)
+            end = 10 
                 
             if(len(rides) > 5): 
                 opt = input("If you would like to view more rides type ok otherwise type done ")
@@ -438,7 +438,16 @@ def bookcancelbookings (email, name):
                 if opt == "ok":                
                     for idx, l in enumerate(rides):
                         if((idx > start) and (idx < end)):
-                            print(l) 
+                            print(l)
+                    start = 10
+                    end = len(rides)  
+                    if(len(rides) > 10): 
+                        opt = input("If you would like to view more rides type ok otherwise type done ")
+                        opt = opt.lower().replace(" ", "")
+                        if opt == "ok":                
+                            for idx, l in enumerate(rides):
+                                if((idx > start) and (idx < end)):
+                                    print(l)                
                 else:
                     if opt == 'done':
                         pass
