@@ -349,8 +349,8 @@ def sdrequests (email,name):
                 print("An error occurred. Please try again later.Check that you are sending to a registered member")                  
             
         sdrequests(email,name)
-    elif(action.lower().replace(" ", "") == "MENU"):
-        menu()  
+    elif(action.upper().replace(" ", "") == "MENU"):
+        menu(email, name)  
     else:
         sdrequests(email,name)
    
