@@ -400,8 +400,8 @@ def bookcancelbookings (email, name):
             #let them decide what they wanna do
     
         else:
-            i = 0;bookcancelbookings
-            end = 5;
+            i = 0
+            end = 5
             for idx, l in enumerate(rides):
                 if((idx >= i) and (idx < end)):
                     print(l)  
@@ -425,6 +425,7 @@ def bookcancelbookings (email, name):
             val = int(rno)
         except ValueError:
             print("Input the ride number as an integer")
+            bookcancelbookings(email,name)
         if rno == "":
             print("You are not cancelling any rides")
             ans = input("Would you like to book other rides (yes/no)")
