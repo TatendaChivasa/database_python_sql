@@ -445,7 +445,8 @@ def bookcancelbookings (email, name):
             if len(rec_email) == 0:
                 print("there are no bookings for that ride")
             else:
-                rec = rec_email[0]
+                rec1 = rec_email[0]
+                rec = rec1[0]
                 content = ("The following ride was cancelled " + str(rno))
                 cursor.execute("SELECT datetime('now')")
                 msg_t_st = cursor.fetchone()
@@ -483,37 +484,36 @@ def book(email, name):
     cursor.execute("SELECT bno FROM bookings")
     bnum = cursor.fetchall()
     bno = max(bnum)
-    bno = bno[0] + 1    
-    
-    #booking message sent to the member
-    cursor.execute("INSERT INTO bookings VALUES(?,?,?,?,?,?,?)", (bno, email, rno, cost, seats, pickup, dropoff))
+    bno = bno[0] + 1  
     
     #warning if ride is being overbooked!! but allow if user confirms
-    avail = "SELECT r.driver r.rno,(r.seats - sum(b.seats)) FROM rides r, bookings b WHERE r.rno = b.rno AND r.driver = ? GROUP BY r.rno;"
+    #returns number of available searts
+    avail = "SELECT (r.seats - sum(b.seats)) FROM rides r, bookings b WHERE r.rno = b.rno AND r.driver = ? GROUP BY r.rno;" 
     cursor.execute(avail,(email,))
     availseats =cursor.fetchall()  
-    i = 0
-    while i < len(availseats):
-        avail = availseats[i][i]
-        i += 1
-        if avail <=0:
-            confirm = input("This ride is being overbooked would you like to continue(yes/no): ")
-            confirm = confirm.lower().replace(" ", "")
-            if confirm == "yes":
-                print("your booking was successful!!!")
-            else:
-                action == "no"
-                print("The booking is not confirmed")
-                menu(email,name)
-        else:
+    tseats = availseats[0][0]
+       
+    if int(seats) > tseats:
+        confirm = input("This ride is being overbooked would you like to continue(yes/no): ")
+        confirm = confirm.lower().replace(" ", "")
+        if confirm == "yes":
             print("your booking was successful!!!")
+        else:
+            action == "no"
+            print("The booking is not confirmed")
+            menu(email,name)
+    else:
+        print("your booking was successful!!!")
+    
+    #booking message sent to the member
+    cursor.execute("INSERT INTO bookings VALUES(?,?,?,?,?,?,?)", (bno, email, rno, cost, seats, pickup, dropoff))  
     
     cursor.execute("SELECT datetime('now')")
     msg_t_st1 = cursor.fetchone()
     msg1 = msg_t_st1[0]
     content1 = ("You have been booked on the following ride " + str(rno))
     #send message to the customer whose booking has been made
-    cursor.execute("INSERT INTO inbox VALUES(?,?,?,?,?,?)", (b_email, msg1, email, content, rno, 'n'))
+    cursor.execute("INSERT INTO inbox VALUES(?,?,?,?,?,?)", (b_email, msg1, email, content1, rno, 'n'))
     ans2 = input("would you like to book people any any rides? (yes/no) ")
     if ans2 == "yes":  
         book()
