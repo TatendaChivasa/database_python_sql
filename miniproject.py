@@ -305,7 +305,18 @@ def sendmessage(email,name):
             sendmess = False
     connection.commit()
     return
-
+def print5(myset,i,j):
+    rides = list(myset)
+    n = len(rides)
+    while(i<j and i<n):
+        print(rides[i])
+        i+=1
+        if(i==j):
+            con = input("Would you like to view more: ")
+            if (con.upper().replace(" ", "") == 'YES'):
+                print5(rides,j+1,j+5)
+        
+    return
 
 def sdrequests (email,name):
     global connection, cursor
