@@ -1,3 +1,3 @@
 #Travel system Project
 sql project
-This is an sql database 
+allows user to book rides, offer rides,search for rides, request rides, posrt rides and delete ride requests
