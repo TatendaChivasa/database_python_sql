@@ -3,6 +3,7 @@ import time
 import hashlib
 import sys
 from datetime import datetime
+from getpass import getpass 
 
 connection = None
 cursor     = None
@@ -65,7 +66,7 @@ def keyword():
         select_lcode = input("Select a location by typing the lcode:")
         return select_lcode
     
- def offerride(email, name):
+def offerride(email, name):
     global connecton, cursor
     default = None
     now = datetime.now()
@@ -668,7 +669,7 @@ def login():
             logout()    
       
     else:  
-        password = encrypt(input("Please enter a password: "))
+        password = encrypt(getpass("Please enter a password: "))
         cursor = connection.cursor()
         cursor.execute("SELECT pwd FROM members WHERE email=? ;",(email,))
         rows=cursor.fetchall()
