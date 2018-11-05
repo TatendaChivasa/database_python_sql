@@ -349,6 +349,7 @@ def menu (email,name):
     print("Press 5 to search/delete ride requests.")
     print("Press 6 to read/send/ reply messages.")
     print("Press 7 to logout.")
+    print("Press 8 to exit.")
     action =input()
     action = int(action.lower().replace(" ", ""))
     if action == 1: 
@@ -364,7 +365,9 @@ def menu (email,name):
     elif action == 6:
         sendmessage(email,name)  
     elif action == 7:
-        logout()    
+        logout()  
+    elif action == 8:
+        exit()
        
     else:
         print("Sorry I didnt get that... I would repeat the menu again." )
@@ -418,7 +421,41 @@ def bookcancelbookings (email, name):
                 else:
                     if opt == 'done':
                         pass
-                   
+        #show sthe bookings on the rides offered
+        print("here are the bookings on the rides that you offer")   
+        bkngs = "SELECT * FROM bookings WHERE rno IN (SELECT rno FROM rides  WHERE driver = ?);"
+        cursor.execute(bkngs,(email,))
+        books=cursor.fetchall() 
+        
+        if len(books) == 0: 
+            print("You have bookings at the moment")
+            option = input("return to menu(yes/no)")
+            option = option.lower().replace(" ", "")
+            if option == "yes": 
+                menu(email, name)
+            else:
+                logout()
+            #let them decide what they wanna do
+    
+        else:
+            i = 0
+            end = 5
+            for idx, l in enumerate(books):
+                if((idx >= i) and (idx < end)):
+                    print(l)  
+            start = 5
+            end = len(books)
+                
+            if(len(books) > 5): 
+                opt1 = input("If you would like to view more rides type ok otherwise type done ")
+                opt1 = opt1.lower().replace(" ", "")
+                if opt1 == "ok":                
+                    for idx, l in enumerate(books):
+                        if((idx > start) and (idx < end)):
+                            print(l) 
+                else:
+                    if opt1 == 'done':
+                        pass                  
                 
         rno = input("Enter the ride number(rno) of the booking that you would like to cancel/enter zero if you do not want to cancel any rides: ")
         try:
@@ -656,7 +693,8 @@ def welcomepage():
     connection.commit()
     return
 
-
+def exit():
+    sys.exit()
 
 def main():
     global connection, cursor
