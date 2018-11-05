@@ -239,14 +239,14 @@ def searchride():
     if(len(all_rides) > 5):
         see_more_result = input("Would you like to see more results ? (yes or no) :")
         if see_more_result == "yes":
-            for idx, l in enumerate(allrides):
+            for idx, l in enumerate(all_rides):
                 if((idx > start) and (idx < end)):
                     print(l)                     
 
 #    print(all_rides)
     #print("rno      |price  |date       |seats|lugdesc  |src|dst|driver        |cno|")
     #for i in all_rides:
-        print(i)
+        #print(i)
      #   print(str(i[0]) +"      " + "|" + str(i[1])+"     " + "|" + str(i[2]) +" "+ "|" + str(i[3])+"    " + "|" + str(i[4]) + "|" + str(i[5]) + "|" + #str(i[6]) + "|" + str(i[7]) +" "+ "|" + str(i[8]))
            
                    
