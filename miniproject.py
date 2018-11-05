@@ -419,7 +419,7 @@ def bookcancelbookings (email, name):
     reply = reply.lower().replace(" ", "")
     if reply == "yes":
         #list available seats
-        available = "SELECT r.driver, r.rno ,(r.seats - sum(b.seats)) FROM rides r, bookings b WHERE r.rno = b.rno AND r.driver = ? GROUP BY r.rno;"
+        available = "SELECT r.driver, r.rno ,ifnull((r.seats - sum(b.seats)),0) FROM rides r left outer join bookings b on (b.rno = r.rno) WHERE r.driver = ? GROUP BY r.rno;"
         cursor.execute(available,(email,))
         rides=cursor.fetchall()   
        
@@ -552,19 +552,14 @@ def book(email, name):
     pickup = input("Enter the pickup location or location code: ")
     dropoff = input("Enter the dropoff location or location code: ")
     
-    cursor.execute("SELECT bno FROM bookings")
-    bnum = cursor.fetchall()
-    bno = max(bnum)
-    bno = bno[0] + 1  
-    
     # checking if member exists
     cursor.execute("SELECT email FROM members WHERE email=? ;",(b_email,))
     mem_email = cursor.fetchall()        
     if len(mem_email) == 0:
         print("You cannot book an unregistered member")
         book(email,name)
-    
-     #check that lcodes exist in table      
+        
+    #check that lcodes exist in table      
     # The request rid is set by your system to a unique number and not already in the table   
     cursor.execute("SELECT lcode FROM locations WHERE lcode=? ;",(pickup,))
     pick = cursor.fetchall()
@@ -576,13 +571,19 @@ def book(email, name):
     elif len(drop) == 0:
             print("invalid drop off location") 
             book(email,name)
+    #---------------------------
+    cursor.execute("SELECT bno FROM bookings")
+    bnum = cursor.fetchall()
+    bno = max(bnum)
+    bno = bno[0] + 1  
     
     #warning if ride is being overbooked!! but allow if user confirms
     #returns number of available searts
-    avail = "SELECT (r.seats - sum(b.seats)) FROM rides r, bookings b WHERE r.rno = b.rno AND r.driver = ? GROUP BY r.rno;" 
-    cursor.execute(avail,(email,))
-    availseats =cursor.fetchall()  
-    tseats = availseats[0][0]
+    avail = "SELECT ifnull((r.seats - sum(b.seats)),0) FROM rides r left outer join bookings b on (b.rno =r.rno) WHERE r.driver = ? AND r.rno = ? GROUP BY r.rno;" 
+    cursor.execute(avail,(email,rno))
+    availseats =cursor.fetchone()  
+    tseats = availseats[0]
+    print(tseats)
        
     if int(seats) > tseats:
         confirm = input("This ride is being overbooked would you like to continue(yes/no): ")
@@ -590,7 +591,7 @@ def book(email, name):
         if confirm == "yes":
             print("your booking was successful!!!")
         else:
-            action == "no"
+            confirm == "no"
             print("The booking is not confirmed")
             menu(email,name)
     else:
@@ -614,7 +615,6 @@ def book(email, name):
         menu(email, name)         
     
     connection.commit()
-    #cursor.close()
     return     
     
 def postrides (email,name):
@@ -748,6 +748,8 @@ def welcomepage():
     return
 
 def exit():
+    connection.commit()
+    connection.close()
     sys.exit()
 
 def main():
