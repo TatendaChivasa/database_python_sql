@@ -583,7 +583,6 @@ def book(email, name):
     cursor.execute(avail,(email,rno))
     availseats =cursor.fetchone()  
     tseats = availseats[0]
-    print(tseats)
        
     if int(seats) > tseats:
         confirm = input("This ride is being overbooked would you like to continue(yes/no): ")
