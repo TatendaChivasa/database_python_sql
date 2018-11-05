@@ -523,6 +523,19 @@ def book(email, name):
     bno = max(bnum)
     bno = bno[0] + 1  
     
+     #check that lcodes exist in table      
+    # The request rid is set by your system to a unique number and not already in the table   
+    cursor.execute("SELECT lcode FROM locations WHERE lcode=? ;",(pickup,))
+    pick = cursor.fetchall()
+    cursor.execute("SELECT lcode FROM locations WHERE lcode=? ;",(dropoff,))
+    drop = cursor.fetchall()        
+    if len(pick) == 0:
+        print("invalid pick up location")
+        book(email,name)
+    elif len(drop) == 0:
+            print("invalid drop off location") 
+            book(email,name)
+    
     #warning if ride is being overbooked!! but allow if user confirms
     #returns number of available searts
     avail = "SELECT (r.seats - sum(b.seats)) FROM rides r, bookings b WHERE r.rno = b.rno AND r.driver = ? GROUP BY r.rno;" 
