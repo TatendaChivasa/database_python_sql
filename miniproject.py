@@ -374,7 +374,6 @@ def menu (email,name):
     connection.commit()
     return
     
-    
 def bookcancelbookings (email, name):
     global connection, cursor
     
@@ -401,7 +400,7 @@ def bookcancelbookings (email, name):
             #let them decide what they wanna do
     
         else:
-            i = 0;
+            i = 0;bookcancelbookings
             end = 5;
             for idx, l in enumerate(rides):
                 if((idx >= i) and (idx < end)):
@@ -422,6 +421,10 @@ def bookcancelbookings (email, name):
                    
                 
         rno = input("Enter the ride number(rno) of the booking that you would like to cancel/press enter if you do not want to cancel any rides: ")
+        try:
+            val = int(rno)
+        except ValueError:
+            print("Input the ride number as an integer")
         if rno == "":
             print("You are not cancelling any rides")
             ans = input("Would you like to book other rides (yes/no)")
@@ -434,50 +437,21 @@ def bookcancelbookings (email, name):
                 menu(email, name)                
                 #give them the option of booking other members or exiting the bookings
         else: 
+            
             #allow multiple deletes at once
-            receiving = cursor.execute("SELECT email FROM bookings WHERE rno = ? ;",(rno,))
-            cursor.execute("DELETE FROM bookings WHERE rno = ?;",(rno,))# ######
-            print("The following booking has been successfully cancelled " + str(rno))
-            #cursor.execute("SELECT * FROM bookings WHERE rno = ? ;",(rno,))
-            left = "SELECT r.driver, r.rno ,(r.seats - sum(b.seats)) FROM rides r, bookings b WHERE r.rno = b.rno AND r.driver = ? GROUP BY r.rno;"
-            cursor.execute(left,(email,))                
-            rides2 = cursor.fetchall()                
-            if len(rides2) == 0: 
-                print("You have no bookings remaining")
-                #ask them if they want to do other things
-            else:
-                print("You have the following remaining bookings:")
-                cursor.execute("SELECT DISTINCT * FROM rides WHERE driver = ? ;",(email,))
-                #getting all the remaining bookings 
-                new_bookings=cursor.fetchall()
-                    
-                i = 0;
-                end = 5;
-                for idx, l in enumerate(new_bookings):
-                    if((idx >= i) and (idx < end)):
-                        print(l)  
-                start = 5
-                end = len(new_bookings)
-                        
-                if(len(new_bookings) > 5): 
-                    opt = input("If you would like to view more rides type ok otherwise type done ")
-                    opt = opt.lower().replace(" ", "")
-                    if opt == "ok":                
-                        for idx, l in enumerate(new_bookings):
-                            if((idx > start) and (idx < end)):
-                                print(l) 
-                    else:
-                        if opt == 'done':
-                            pass
-                           
-                             
-                    
+            cursor.execute("SELECT email FROM bookings WHERE rno = ? ;",(rno,))
+            rec_email = cursor.fetchone()
+            rec = rec_email[0]
             content = ("The following ride was cancelled " + str(rno))
             cursor.execute("SELECT datetime('now')")
             msg_t_st = cursor.fetchone()
             msg = msg_t_st[0]
+            status = 'n'
                 #send message to the customer whose booking has been cancelled
-            cursor.execute("INSERT INTO inbox VALUES(?,?,?,?,?,?)", (receiving, msg, email, content, rno, 'n'))
+            cursor.execute("INSERT INTO inbox VALUES(?,?,?,?,?,?)", (rec, msg, email, content, rno, status))            
+            cursor.execute("DELETE FROM bookings WHERE rno = ?;",(rno,))# ######
+            print("The following booking has been successfully cancelled " + str(rno))
+                           
             ans2 = input("would you like to book people any any rides? (yes/no) ")
             ans2 = ans2.lower().replace(" ", "")
             if ans2 == "yes":  
@@ -491,8 +465,7 @@ def bookcancelbookings (email, name):
              
                
     connection.commit()
-    #cursor.close()
-    return    
+    return       
 
 def book(email, name):
     print("Enter the details of the member you would like to book on a ride ")
