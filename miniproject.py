@@ -2,6 +2,7 @@ import sqlite3
 import time
 import hashlib
 import sys
+import re
 from datetime import datetime
 from getpass import getpass 
 
