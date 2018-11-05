@@ -528,6 +528,13 @@ def book(email, name):
     bno = max(bnum)
     bno = bno[0] + 1  
     
+    # checking if member exists
+    cursor.execute("SELECT email FROM members WHERE email=? ;",(b_email,))
+    mem_email = cursor.fetchall()        
+    if len(mem_email) == 0:
+        print("You cannot book an unregistered member")
+        book(email,name)
+    
      #check that lcodes exist in table      
     # The request rid is set by your system to a unique number and not already in the table   
     cursor.execute("SELECT lcode FROM locations WHERE lcode=? ;",(pickup,))
