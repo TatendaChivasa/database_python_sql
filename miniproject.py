@@ -195,44 +195,71 @@ def offerride(email, name):
     connection.commit()
     return 
 
+def print5(myset,i,j):
+    rides = list(myset)
+    n = len(rides)
+    while(i<j and i<n):
+        print(rides[i])
+        i+=1
+        if(i==j):
+            con = input("Would you like to view more: ")
+            if (con.upper().replace(" ", "") == 'YES'):
+                print5(rides,j+1,j+5)
+        
+    return
 
-def searchride():
-    global connection, cursor 
+def sdrequests (email,name):
+    global connection, cursor
+    action = input("Type all requests to view  all your requests  and city requests to view requests from a specific city or location and MENU to return to Menu: ")
+    messageset = set()
+    allset = set()
     
-    print("search rides")
-    
-    #ask the user to enter a maximum of three inputs 
-    keywords = map(str, input("Enter keywords separated by commas (3 maximum) :").split(','))
-    
-    
-    # limit to 3 keywords 
-    all_rides =[];
-    for i in keywords:
-        
-        keyword = '%'+i+'%'
-        cursor.execute("select * from locations where lcode = ? or city like ? or prov like ? or address like ?;",(i,keyword,keyword,keyword,))   
-        location = cursor.fetchall()
-        
-        for a_location in location:
-            location_lcode = a_location[0]
-            #while(isless):
-            #Stop it from printing duplicates
-            cursor.execute("SELECT  DISTINCT r.rno , r.price , r.rdate , r.seats , r.lugDesc , r.src, r.dst, r.driver, r.cno FROM rides r , locations l WHERE ( r.src = ? OR  r.dst = ? );",(location_lcode,location_lcode))
-            #do the limit stuff
+    if(action.lower().replace(" ", "") == "allrequests"):
+        # dosomething 
+        #limit both to 5 
+        print("your requests")
+        cursor.execute("SELECT * FROM requests WHERE email=? ;",(email,))
+        messages=cursor.fetchall() 
+        for i in messages:
+            messageset.add(i)
+        print5(messageset,0,4)
+        delete = input("Would you like to delete any of your rides ?")
+        if(delete.lower().replace(" ","") == "yes"):
+            rid =  tuple(list(input("Please list the rid's of the requests which you would like to delete seperated by spaces and press enter when u are done")))
+            for i in rid:
+                cursor.execute("DELETE FROM requests WHERE rid  = ? AND email= ?;",(i,email))
+        sdrequests(email,name)
+    elif(action.lower().replace(" ", "") == "cityrequests"):
+        #limit both to 5 options to view
+        loc=input("Please enter your location code or city for the requests")
+        location = "%"+loc+"%"
+        cursor.execute("SELECT * FROM requests r ,locations l  WHERE  (r.pickup = l.lcode OR r.dropoff = l.lcode) AND (l.lcode like ? OR l.city like ? ) ;",(location,location))
+        allreq=cursor.fetchall() 
+        for i in allreq:
+            allset.add(i)
+        print5(allset,0,4)
+        delete = input("Would you like to message any of the posters ?")
+        if(delete.lower().replace(" ","") == "yes"):
+            rid =  input("Enter the rid of the ride you would to talk about?")
+            content = input("What would you like to tell the poster;")
+            rno = input ("What is the rno?:")
+            cursor.execute("SELECT email,rdate FROM requests WHERE rid =?;",(rid,))
+            stuff = cursor.fetchone()
+            poster = stuff[0]
+            date = stuff[1]
             
-            rides = cursor.fetchall()
+            try:
+                cursor.execute("INSERT INTO inbox VALUES(?,?,?,?,?,?)", (email,date,poster,content,rno,'n'))
+            except sqlite3.IntegrityError:
+                print("An error occurred. Please try again later.Check that you are sending to a registered member")                  
             
-            for j in rides:
-                if j not in all_rides:
-                    all_rides.append(j)
-    print(all_rides)
-    #print("rno      |price  |date       |seats|lugdesc  |src|dst|driver        |cno|")
-    for i in all_rides:
-        print(i)
-     #   print(str(i[0]) +"      " + "|" + str(i[1])+"     " + "|" + str(i[2]) +" "+ "|" + str(i[3])+"    " + "|" + str(i[4]) + "|" + str(i[5]) + "|" + #str(i[6]) + "|" + str(i[7]) +" "+ "|" + str(i[8]))
-           
-                   
-    connection.commit()
+        sdrequests(email,name)
+    elif(action.lower().replace(" ", "") == "MENU"):
+        menu()  
+    else:
+        sdrequests(email,name)
+   
+    return 
 
 def sendmessage(email,name):
     global connection, cursor
