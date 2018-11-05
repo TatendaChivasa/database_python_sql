@@ -66,6 +66,7 @@ def keyword():
         select_lcode = input("Select a location by typing the lcode:")
         return select_lcode
     
+
 def offerride(email, name):
     global connecton, cursor
     default = None
@@ -146,14 +147,15 @@ def offerride(email, name):
         
     #RIDE NUMBER  
     #uniquely assign a ride number 
-    cursor.execute("SELECT rno FROM rides ORDER BY rno DESC LIMIT 1;");
+    cursor.execute("SELECT max(rno) FROM rides ;");
     rideNo = cursor.fetchone()
     if rideNo == None:
         rno = 1
     else :
         for item in rideNo:
             rno = item + 1
-    
+            
+ 
     #SOURCE 
     print("Enter starting location")
     src=keyword()
@@ -161,6 +163,11 @@ def offerride(email, name):
     #DESTINATION
     print("Enter destination")
     dest = keyword()
+    
+    #INSERT
+    #insert all of the values into the table rides in the database    
+    cursor.execute("INSERT INTO rides VALUES(?,?,?,?,?,?,?,?,?);", (rno, price, date, seats,lugDesc, src, dest, driver, carNo))
+        
     
    
     #ENROUTE 
@@ -171,20 +178,19 @@ def offerride(email, name):
     if enrouteOpt == "yes":
         #call the keyword function
         
-        enroute  = map(str, input("Enter location code(s) (separate lcode with commas) :").split(','))
+        #enroute  = map(str, input("Enter location code(s) (separate lcode with commas) :").split(','))
+        enroute  = input("Enter location code(s) (separate lcode with commas) :")
+        enroute_lst = enroute.split(',')
         
-        #put lcode into enroute table in the data base
-        for item in enroute:
-            enroute = item.lower()
-            cursor.execute("INSERT INTO enroute (rno, lcode) Values (?, ?)", (rno,enroute))
-    # to not add anythoing to the enroute table if the user does not enter any set of enroute locations
+        for item in enroute_lst:
+            item_lower = item.lower()
+            #put rno, lcode into enroute table in the data base
+            cursor.execute("INSERT INTO enroute (rno, lcode) Values (?, ?)", (rno,item_lower))
+            
+    # to not add anything to the enroute table if the user does not enter any set of enroute locations
     else :
         pass
                
-    
-    #INSERT
-    #insert all of the values into the table rides in the database 
-    cursor.execute("INSERT INTO rides VALUES(?,?,?,?,?,?,?,?,?);", (rno, price, date, seats,lugDesc, src, dest, driver, carNo))
     
     connection.commit()
     return 
@@ -193,7 +199,7 @@ def offerride(email, name):
 def searchride():
     global connection, cursor 
     
-    print("searchride")
+    print("search rides")
     
     #ask the user to enter a maximum of three inputs 
     keywords = map(str, input("Enter keywords separated by commas (3 maximum) :").split(','))
@@ -219,15 +225,14 @@ def searchride():
             for j in rides:
                 if j not in all_rides:
                     all_rides.append(j)
-    #print(all_rides)
-    print("rno      |price  |date       |seats|lugdesc  |src|dst|driver        |cno|")
+    print(all_rides)
+    #print("rno      |price  |date       |seats|lugdesc  |src|dst|driver        |cno|")
     for i in all_rides:
-        print(str(i[0]) +"      " + "|" + str(i[1])+"     " + "|" + str(i[2]) +" "+ "|" + str(i[3])+"    " + "|" + str(i[4]) + "|" + str(i[5]) + "|" + str(i[6]) + "|" + str(i[7]) +" "+ "|" + str(i[8]))
+        print(i)
+     #   print(str(i[0]) +"      " + "|" + str(i[1])+"     " + "|" + str(i[2]) +" "+ "|" + str(i[3])+"    " + "|" + str(i[4]) + "|" + str(i[5]) + "|" + #str(i[6]) + "|" + str(i[7]) +" "+ "|" + str(i[8]))
            
                    
     connection.commit()
-    return    
-
 
 def sendmessage(email,name):
     global connection, cursor
