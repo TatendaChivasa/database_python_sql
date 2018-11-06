@@ -259,7 +259,6 @@ def searchride():
                    
     connection.commit()
     return
-
 def sendmessage(email,name):
     global connection, cursor
     print("Your Messages:")
