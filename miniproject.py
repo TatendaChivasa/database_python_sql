@@ -198,67 +198,40 @@ def offerride(email, name):
 
 
 
-def searchride():
+def searchride(email,name):
     global connection, cursor 
     
-    print("search rides")
+    print("searchride")
     
-    #ask the user to enter a maximum of three inputs
+    #ask the user to enter a maximum of three inputs 
     keywords = map(str, input("Enter keywords separated by commas (3 maximum) :").split(','))
     
     
     # limit to 3 keywords 
-    all_rides =[];
+    all_rides = set();
     for i in keywords:
+        
         keyword = '%'+i+'%'
         cursor.execute("select * from locations where lcode = ? or city like ? or prov like ? or address like ?;",(i,keyword,keyword,keyword,))   
         location = cursor.fetchall()
         
         for a_location in location:
             location_lcode = a_location[0]
+            #while(isless):
             #Stop it from printing duplicates
             cursor.execute("SELECT  DISTINCT r.rno , r.price , r.rdate , r.seats , r.lugDesc , r.src, r.dst, r.driver, r.cno FROM rides r , locations l WHERE ( r.src = ? OR  r.dst = ? );",(location_lcode,location_lcode))
-           
+            #do the limit stuff
+            
             rides = cursor.fetchall()
             
             for j in rides:
-                if j not in all_rides:
-                    all_rides.append(j)
-                    
+                    all_rides.add(j)
+        print5(all_rides,0,5,email,name)            
+        
     
-    #display 5 results at a time               
-    start = 0
-    end = 5
-    length= len(all_rides)
-    for idx, l in enumerate(all_rides):
-        if((idx >= start) and (idx < end)):
-            print(l)
-        
-    start = 5
-    end = start + 5
-    length=length-5
-  
-    if(len(all_rides) > 5):
-        while length > 0:
-            see_more_result = input("Would you like to see more results ? (yes or no) :")
-            if see_more_result == "yes":
-                for idx, l in enumerate(all_rides):
-                    if((idx >= start) and (idx < end)):
-                        print(l)
-                end = start+5
-                start = start + 5
-                length =length-5
-            elif length==0:
-                print("There are no more results")
-                break
-            else:
-                break
-                        
-        
-   
-                   
     connection.commit()
-    return
+    return   
+
 def sendmessage(email,name):
     global connection, cursor
     print("Your Messages:")
@@ -312,18 +285,22 @@ def sendmessage(email,name):
             sendmess = False
     connection.commit()
     return
-def print5(myset,i,j):
+def print5(myset,i,j,email,name):
     rides = list(myset)
     n = len(rides)
-    while(i<j and i<n):
+    while(i<=j and i<n):
         print(rides[i])
         i+=1
         if(i==j):
             con = input("Would you like to view more: ")
             if (con.upper().replace(" ", "") == 'YES'):
-                print5(rides,j+1,j+5)
+                print5(rides,j+1,j+5,email,name)
+            elif (con.upper().replace(" ", "") == 'NO'):
+                
+                menu(email,name)
         
     return
+
 
 def sdrequests (email,name):
     global connection, cursor
@@ -339,7 +316,7 @@ def sdrequests (email,name):
         messages=cursor.fetchall() 
         for i in messages:
             messageset.add(i)
-        print5(messageset,0,4)
+        print5(messageset,0,5,email,name)
         delete = input("Would you like to delete any of your rides ?")
         if(delete.lower().replace(" ","") == "yes"):
             rid =  tuple(list(input("Please list the rid's of the requests which you would like to delete seperated by spaces and press enter when u are done")))
@@ -354,7 +331,7 @@ def sdrequests (email,name):
         allreq=cursor.fetchall() 
         for i in allreq:
             allset.add(i)
-        print5(allset,0,4)
+        print5(allset,0,5,email,name)
         delete = input("Would you like to message any of the posters ?")
         if(delete.lower().replace(" ","") == "yes"):
             rid =  input("Enter the rid of the ride you would to talk about?")
@@ -377,9 +354,6 @@ def sdrequests (email,name):
         sdrequests(email,name)
    
     return 
-
-
-
 def logout():
     print("Bye... Hope you come back")
     print("____________________________________________________________________________________________________________________________________________")
@@ -403,7 +377,7 @@ def menu (email,name):
     if action == 1: 
         offerride(email,name)
     elif action == 2:
-        searchride()
+        searchride(email,name)
     elif action == 3:
         bookcancelbookings(email, name)
     elif action == 4:
