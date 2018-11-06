@@ -10,7 +10,67 @@ connection = None
 cursor     = None
 getuser    = None 
 
-
+def searchride():
+    global connection, cursor 
+    
+    print("search rides")
+    
+    #ask the user to enter a maximum of three inputs
+    keywords = map(str, input("Enter keywords separated by commas (3 maximum) :").split(','))
+    
+    
+    # limit to 3 keywords 
+    all_rides =[];
+    for i in keywords:
+        keyword = '%'+i+'%'
+        cursor.execute("select * from locations where lcode = ? or city like ? or prov like ? or address like ?;",(i,keyword,keyword,keyword,))   
+        location = cursor.fetchall()
+        
+        for a_location in location:
+            location_lcode = a_location[0]
+            #Stop it from printing duplicates
+            cursor.execute("SELECT  DISTINCT r.rno , r.price , r.rdate , r.seats , r.lugDesc , r.src, r.dst, r.driver, r.cno FROM rides r , locations l WHERE ( r.src = ? OR  r.dst = ? );",(location_lcode,location_lcode))
+           
+            rides = cursor.fetchall()
+            
+            for j in rides:
+                if j not in all_rides:
+                    all_rides.append(j)
+                    
+    
+    #display 5 results at a time               
+    start = 0
+    end = 5
+    length= len(all_rides)
+    for idx, l in enumerate(all_rides):
+        if((idx >= start) and (idx < end)):
+            print(l)
+        
+    start = 5
+    end = start + 5
+    length=length-5
+  
+    if(len(all_rides) > 5):
+        while length > 0:
+            see_more_result = input("Would you like to see more results ? (yes or no) :")
+            if see_more_result == "yes":
+                for idx, l in enumerate(all_rides):
+                    if((idx >= start) and (idx < end)):
+                        print(l)
+                end = start+5
+                start = start + 5
+                length =length-5
+            elif length==0:
+                print("There are no more results")
+                break
+            else:
+                break
+                        
+        
+   
+                   
+    connection.commit()
+    return
 def encrypt(password):
     alg = hashlib.sha256()
     alg.update(password.encode("utf-8"))
